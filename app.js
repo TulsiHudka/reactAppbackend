@@ -1,6 +1,12 @@
 const express = require("express");
 const Blog = require("./src/models/blogs");
+const User = require("./src/models/users");
 const app = express();
+require('dotenv').config();
+const bcrypt=require("bcryptjs");
+const cookieParser=require("cookie-parser");
+// const auth = require("./middleware/auth");
+
 require("./src/db/conn");
 // const port = process.env.PORT || 5000;
 
@@ -10,6 +16,8 @@ const cors = require('cors')
 app.use(cors());
 
 app.use(express.json());
+app.use(cookieParser());
+app.use(express.urlencoded({extended:false}));
 
 app.get("/blogs", async (req, res) => {
   try {
@@ -71,6 +79,19 @@ app.put("/edit/:id", async(req, res) => {
       res.status(500).send(e);
   }
 })
+
+
+app.get("/users", async (req, res) => {
+  try {
+    const getUsers = await User.find({});
+    console.log(getUsers);
+    res.json(getUsers);
+  } catch (e) {
+    res.status(400).send(e);
+  }
+})
+
+
 
 app.listen(8000, () => {
   console.log(`server is running at `);
