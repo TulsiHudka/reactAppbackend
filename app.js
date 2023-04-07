@@ -5,7 +5,8 @@ const app = express();
 require('dotenv').config();
 const bcrypt = require("bcryptjs");
 const cookieParser = require("cookie-parser");
-// const auth = require("./middleware/auth");
+const jwt = require("jsonwebtoken")
+const auth = require("./src/middleware/auth");
 
 require("./src/db/conn");
 // const port = process.env.PORT || 5000;
@@ -29,7 +30,7 @@ app.get("/blogs", async (req, res) => {
 })
 
 //for individual req
-app.get("/blogs/:id", async (req, res) => {
+app.get("/blogs/:id",auth , async (req, res) => {
   try {
     const _id = req.params.id;
     const getBlog = await Blog.findById(_id);
@@ -41,7 +42,7 @@ app.get("/blogs/:id", async (req, res) => {
 
 //for addBlog 
 
-app.post("/addBlog", async (req, res) => {
+app.post("/addBlog", auth, async (req, res) => {
   try {
     const addingBlogs = new Blog(req.body);
     const insertBlogs = await addingBlogs.save();
@@ -55,7 +56,7 @@ app.post("/addBlog", async (req, res) => {
 
 //for deleting blog
 
-app.delete("/blogs/:id", async (req, res) => {
+app.delete("/blogs/:id", auth, async (req, res) => {
   try {
     const _id = req.params.id;
     const deleteBlog = await Blog.findByIdAndDelete(req.params.id);
@@ -67,12 +68,25 @@ app.delete("/blogs/:id", async (req, res) => {
 
 //for editing blog
 
-app.put("/edit/:id", async (req, res) => {
+app.put("/edit/:id", auth,async (req, res) => {
   try {
     const _id = req.params.id;
     const editBlog = await Blog.findByIdAndUpdate(_id, req.body, {
       new: true
     });
+    console.log(editBlog);
+    res.send(editBlog);
+  } catch (e) {
+    res.status(500).send(e);
+  }
+})
+
+
+app.put("/users/:id", auth,async (req, res) => {
+  try {
+    const _id = req.params.id;
+    const editBlog = await Blog.findByIdAndUpdate(_id, req.body);
+    console.log(editBlog);
     res.send(editBlog);
   } catch (e) {
     res.status(500).send(e);
@@ -81,7 +95,7 @@ app.put("/edit/:id", async (req, res) => {
 
 // get users
 
-app.get("/users", async (req, res) => {
+app.get("/users", auth, async (req, res) => {
   try {
     const getUsers = await User.find({});
     // console.log(getUsers);
@@ -103,7 +117,42 @@ app.post("/register", async (req, res) => {
   }
 })
 
+//login user
 
+
+app.post("/login", async (req, res, next) => {
+  const email = req.body.email;
+  const password = req.body.password;
+  try {
+    const loadedUser = await User.findOne({ email: email });
+    if (!loadedUser) {
+      return res.status(404).send({ msg: "User Not Found" });
+    }
+
+    if (password !== loadedUser.password) {
+      return res.status(400).send({ msg: "Invalid Credential" });
+    }
+
+    const token = jwt.sign(
+      {
+        email: loadedUser.email,
+        userId: loadedUser._id.toString(),
+      },
+      "somesupersecretsecret",
+      { expiresIn: "1h" }
+    );
+
+    console.log(token);
+
+    res.status(200).json({
+      msg: "User Loggedin successfully",
+      token: token,
+      user: loadedUser,
+    });
+  } catch (error) {
+    res.status(500).send({ msg: error.message });
+  }
+});
 
 app.listen(8000, () => {
   console.log(`server is running at `);
