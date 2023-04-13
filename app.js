@@ -81,13 +81,13 @@ app.put("/edit/:id", auth,async (req, res) => {
   }
 })
 
-
+//change role
 app.put("/users/:id", auth,async (req, res) => {
   try {
     const _id = req.params.id;
-    const editBlog = await Blog.findByIdAndUpdate(_id, req.body);
-    console.log(editBlog);
-    res.send(editBlog);
+    const changeRole = await User.findByIdAndUpdate(_id, req.body);
+    console.log(changeRole);
+    res.send(changeRole);
   } catch (e) {
     res.status(500).send(e);
   }
