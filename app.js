@@ -1,6 +1,7 @@
 const express = require("express");
 const Blog = require("./src/models/blogs");
 const User = require("./src/models/users");
+const multer = require("multer")
 const app = express();
 require('dotenv').config();
 const bcrypt = require("bcryptjs");
@@ -14,10 +15,24 @@ require("./src/db/conn");
 
 const cors = require('cors')
 
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: function (req, file, cb) {
+      cb(null, "uploads")
+    },
+    filename: function (req, file, cb) {
+      cb(null,  Date.now()+ "_" + file.originalname)
+    }
+  })
+}).single("url");
+
+
+
 app.use(cors());
 app.use(express.json());
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: false }));
+app.use("/uploads", express.static("uploads"));
 
 app.get("/blogs", async (req, res) => {
   try {
@@ -30,7 +45,7 @@ app.get("/blogs", async (req, res) => {
 })
 
 //for individual req
-app.get("/blogs/:id",auth , async (req, res) => {
+app.get("/blogs/:id", auth, async (req, res) => {
   try {
     const _id = req.params.id;
     const getBlog = await Blog.findById(_id);
@@ -42,11 +57,20 @@ app.get("/blogs/:id",auth , async (req, res) => {
 
 //for addBlog 
 
-app.post("/addBlog", auth, async (req, res) => {
+app.post("/addBlog",upload, auth, async (req, res) => {
   try {
-    const addingBlogs = new Blog(req.body);
+    console.log(req.file.filename);
+    const addBlog = {
+      title: req.body.title,
+      url: req.file.filename,
+      description: req.body.description,
+      author: req.body.author,
+      category: req.body.category,
+      admin: req.body.admin
+    }
+    const addingBlogs = new Blog(addBlog);
     const insertBlogs = await addingBlogs.save();
-    // console.log(insertBlogs);
+    console.log(addingBlogs);
     res.status(201).send(insertBlogs);
   } catch (e) {
     res.status(400).send(e);
@@ -68,7 +92,7 @@ app.delete("/blogs/:id", auth, async (req, res) => {
 
 //for editing blog
 
-app.put("/edit/:id", auth,async (req, res) => {
+app.put("/edit/:id", auth, async (req, res) => {
   try {
     const _id = req.params.id;
     const editBlog = await Blog.findByIdAndUpdate(_id, req.body, {
@@ -82,7 +106,7 @@ app.put("/edit/:id", auth,async (req, res) => {
 })
 
 //change role
-app.put("/users/:id", auth,async (req, res) => {
+app.put("/users/:id", auth, async (req, res) => {
   try {
     const _id = req.params.id;
     const changeRole = await User.findByIdAndUpdate(_id, req.body);
@@ -94,7 +118,6 @@ app.put("/users/:id", auth,async (req, res) => {
 })
 
 // get users
-
 app.get("/users", auth, async (req, res) => {
   try {
     const getUsers = await User.find({});
@@ -117,8 +140,18 @@ app.post("/register", async (req, res) => {
   }
 })
 
-//login user
 
+//file upload
+
+
+
+app.post("/upload", upload, (req, res) => {
+
+  res.send("file upload")
+})
+
+
+//login user
 
 app.post("/login", async (req, res, next) => {
   const email = req.body.email;
