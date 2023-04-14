@@ -15,6 +15,9 @@ require("./src/db/conn");
 
 const cors = require('cors')
 
+
+//multer
+
 const upload = multer({
   storage: multer.diskStorage({
     destination: function (req, file, cb) {
@@ -33,6 +36,7 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: false }));
 app.use("/uploads", express.static("uploads"));
+
 
 app.get("/blogs", async (req, res) => {
   try {
@@ -92,10 +96,18 @@ app.delete("/blogs/:id", auth, async (req, res) => {
 
 //for editing blog
 
-app.put("/edit/:id", auth, async (req, res) => {
+app.put("/edit/:id",upload, auth, async (req, res) => {
   try {
     const _id = req.params.id;
-    const editBlog = await Blog.findByIdAndUpdate(_id, req.body, {
+    const addBlog = {
+      title: req.body.title,
+      url: req.file.filename,
+      description: req.body.description,
+      author: req.body.author,
+      category: req.body.category,
+      admin: req.body.admin
+    }
+    const editBlog = await Blog.findByIdAndUpdate(_id, addBlog , {
       new: true
     });
     console.log(editBlog);
@@ -142,8 +154,6 @@ app.post("/register", async (req, res) => {
 
 
 //file upload
-
-
 
 app.post("/upload", upload, (req, res) => {
 
