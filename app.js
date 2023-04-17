@@ -1,7 +1,9 @@
+require('dotenv').config();
 const express = require("express");
 const Blog = require("./src/models/blogs");
 const User = require("./src/models/users");
 const multer = require("multer")
+const nodemailer = require("nodemailer")
 const app = express();
 require('dotenv').config();
 const bcrypt = require("bcryptjs");
@@ -16,6 +18,17 @@ require("./src/db/conn");
 const cors = require('cors')
 
 
+// email config
+
+const transporter = nodemailer.createTransport({
+  service: "Yandex",
+  auth: {
+    user: process.env.EMAIL,
+    pass: process.env.PASSWORD
+  }
+})
+
+
 //multer
 
 const upload = multer({
@@ -24,7 +37,7 @@ const upload = multer({
       cb(null, "uploads")
     },
     filename: function (req, file, cb) {
-      cb(null,  Date.now()+ "_" + file.originalname)
+      cb(null, Date.now() + "_" + file.originalname)
     }
   })
 }).single("url");
@@ -61,7 +74,7 @@ app.get("/blogs/:id", auth, async (req, res) => {
 
 //for addBlog 
 
-app.post("/addBlog",upload, auth, async (req, res) => {
+app.post("/addBlog", upload, auth, async (req, res) => {
   try {
     console.log(req.file.filename);
     const addBlog = {
@@ -96,7 +109,7 @@ app.delete("/blogs/:id", auth, async (req, res) => {
 
 //for editing blog
 
-app.put("/edit/:id",upload, auth, async (req, res) => {
+app.put("/edit/:id", upload, auth, async (req, res) => {
   try {
     const _id = req.params.id;
     const addBlog = {
@@ -107,7 +120,7 @@ app.put("/edit/:id",upload, auth, async (req, res) => {
       category: req.body.category,
       admin: req.body.admin
     }
-    const editBlog = await Blog.findByIdAndUpdate(_id, addBlog , {
+    const editBlog = await Blog.findByIdAndUpdate(_id, addBlog, {
       new: true
     });
     console.log(editBlog);
@@ -197,6 +210,83 @@ app.post("/login", async (req, res, next) => {
   }
 });
 
+
+//send email Link For reset Password
+
+app.post("/sendpasswordlink", async (req, res) => {
+
+  const email = req.body.email;
+  console.log(email)
+
+
+  if (!email) {
+    // res.status(401).json({ status: 401, message: "Enter Your Email" })
+  }
+
+  try {
+    // const userfind = await User.findOne({ email: email });
+    // console.log(userfind);
+    // }
+    //    token generate for reset password
+    //   const token = jwt.sign({ _id: userfind._id }, keysecret, {
+    //     expiresIn: "120s"
+    //   });
+
+    //   const setusertoken = await userdb.findByIdAndUpdate({ _id: userfind._id }, { verifytoken: token }, { new: true });
+
+
+    //   if (userfind) {
+    //     const mailOptions = {
+    //       from: process.env.EMAIL,
+    //       to: email,
+    //       subject: "Sending Email For password Reset",
+    //       text: `This Link Valid For 2 MINUTES http://localhost:3000/newpassword/${userfind.id}/${userfind.verifytoken}`
+    //     }
+
+    //     transporter.sendMail(mailOptions, (error, info) => {
+    //       if (error) {
+    //         console.log("error", error);
+    //         res.status(401).json({ status: 401, message: "email not send" })
+    //       } else {
+    //         console.log("Email sent", info.response);
+    //         res.status(201).json({ status: 201, message: "Email sent Succsfully" })
+    //       }
+    //     })
+
+
+  }
+  catch (error) {
+    res.status(401).json({ status: 401, message: "invalid user" })
+  }
+
+});
+
+// verify user for forgot password time
+app.get("/newPassword/:id/:token", async (req, res) => {
+  const { id, token } = req.params;
+
+  try {
+    const validuser = await User.findOne({ _id: id, verifytoken: token });
+
+    const verifyToken = jwt.verify(token, keysecret);
+
+    console.log(verifyToken)
+
+    if (validuser && verifyToken._id) {
+      res.status(201).json({ status: 201, validuser })
+    } else {
+      res.status(401).json({ status: 401, message: "user not exist" })
+    }
+
+  } catch (error) {
+    res.status(401).json({ status: 401, error })
+  }
+});
+
+
+
 app.listen(8000, () => {
   console.log(`server is running at `);
 })
+
+
