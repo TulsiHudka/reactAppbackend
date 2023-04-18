@@ -18,7 +18,11 @@ const userSchema = new mongoose.Schema({
     },
     role: {
         type: String
+    },
+    verifytoken: {
+        type: String
     }
+    
 });
 
 const User = new mongoose.model("User", userSchema);

@@ -198,7 +198,7 @@ app.post("/login", async (req, res, next) => {
       { expiresIn: "1h" }
     );
 
-    console.log(token);
+    // console.log(token);
 
     res.status(200).json({
       msg: "User Loggedin successfully",
@@ -216,44 +216,50 @@ app.post("/login", async (req, res, next) => {
 app.post("/sendpasswordlink", async (req, res) => {
 
   const email = req.body.email;
-  console.log(email)
+  // console.log(email)
 
 
   if (!email) {
-    // res.status(401).json({ status: 401, message: "Enter Your Email" })
+    res.status(401).json({ status: 401, message: "Enter Your Email" })
   }
 
   try {
-    // const userfind = await User.findOne({ email: email });
-    // console.log(userfind);
-    // }
-    //    token generate for reset password
-    //   const token = jwt.sign({ _id: userfind._id }, keysecret, {
-    //     expiresIn: "120s"
-    //   });
-
-    //   const setusertoken = await userdb.findByIdAndUpdate({ _id: userfind._id }, { verifytoken: token }, { new: true });
+    const userfind = await User.findOne({ email: email });
 
 
-    //   if (userfind) {
-    //     const mailOptions = {
-    //       from: process.env.EMAIL,
-    //       to: email,
-    //       subject: "Sending Email For password Reset",
-    //       text: `This Link Valid For 2 MINUTES http://localhost:3000/newpassword/${userfind.id}/${userfind.verifytoken}`
-    //     }
 
-    //     transporter.sendMail(mailOptions, (error, info) => {
-    //       if (error) {
-    //         console.log("error", error);
-    //         res.status(401).json({ status: 401, message: "email not send" })
-    //       } else {
-    //         console.log("Email sent", info.response);
-    //         res.status(201).json({ status: 201, message: "Email sent Succsfully" })
-    //       }
-    //     })
+    // token generate for reset password
+    const token = jwt.sign({ _id: userfind._id }, "keysecret", {
+      expiresIn: "1h"
+    });
+    // console.log(token);
+
+    const setusertoken = await User.findByIdAndUpdate({ _id: userfind._id }, { verifytoken: token });
+
+    // console.log(setusertoken.verifytoken);
 
 
+
+    if (userfind) {
+      const mailOptions = {
+        from: process.env.EMAIL,
+        to: email,
+        subject: "Sending Email For password Reset",
+        text: `This Link Valid For 1 hour http://localhost:3000/newpassword/${userfind.id}/${setusertoken.verifytoken}`
+      }
+
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          console.log("error", error);
+          res.status(401).json({ status: 401, message: "email not send" })
+        } else {
+          console.log("Email sent", info.response);
+          res.status(201).json({ status: 201, message: "Email sent Succsfully" })
+        }
+      })
+
+
+    }
   }
   catch (error) {
     res.status(401).json({ status: 401, message: "invalid user" })
@@ -261,16 +267,20 @@ app.post("/sendpasswordlink", async (req, res) => {
 
 });
 
-// verify user for forgot password time
-app.get("/newPassword/:id/:token", async (req, res) => {
+
+
+//verify user for forgot password time
+app.post("/verifytoken/:id/:token", async (req, res) => {
   const { id, token } = req.params;
-
+  // console.log(id, token);
   try {
-    const validuser = await User.findOne({ _id: id, verifytoken: token });
+    // const userfind = await User.findOne({ _id: id });
+    const validuser = await User.findOne({ _id: id });
+    // console.log(validuser);
 
-    const verifyToken = jwt.verify(token, keysecret);
+    const verifyToken = jwt.verify(validuser.verifytoken, "keysecret");
+    // console.log(verifyToken._id);
 
-    console.log(verifyToken)
 
     if (validuser && verifyToken._id) {
       res.status(201).json({ status: 201, validuser })
@@ -282,7 +292,43 @@ app.get("/newPassword/:id/:token", async (req, res) => {
     res.status(401).json({ status: 401, error })
   }
 });
+// console.log(validuser);
+// console.log(verifyToken)
 
+
+// change password
+
+app.post("/changedPassword/:id/:token", async (req, res) => {
+  const { id, token } = req.params;
+
+  const { password } = req.body;
+
+  // console.log(req.body);
+
+  // console.log(id, password, token);
+
+  try {
+    const validuser = await User.findOne({ _id: id });
+    // console.log(validuser);
+
+    const verifyToken = jwt.verify(token, "keysecret");
+    console.log(verifyToken);
+
+    if (validuser && verifyToken._id) {
+      const newpassword = await bcrypt.hash(password, 12);
+
+      const setnewuserpass = await User.findByIdAndUpdate({ _id: id }, { password: newpassword });
+
+      setnewuserpass.save();
+      res.status(201).json({ status: 201, setnewuserpass })
+
+    } else {
+      res.status(401).json({ status: 401, message: "user not exist" })
+    }
+  } catch (error) {
+    res.status(401).json({ status: 401, error })
+  }
+})
 
 
 app.listen(8000, () => {
