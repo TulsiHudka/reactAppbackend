@@ -9,7 +9,10 @@ require('dotenv').config();
 const bcrypt = require("bcryptjs");
 const cookieParser = require("cookie-parser");
 const jwt = require("jsonwebtoken")
-const auth = require("./src/middleware/auth");
+const auth = require("./middleware/auth");
+const config = require("./Config/config");
+const randomString = require("randomstring");
+const fs = require("fs");
 
 require("./src/db/conn");
 // const port = process.env.PORT || 5000;
@@ -57,10 +60,12 @@ app.get("/blogs", async (req, res) => {
 })
 
 //for individual req
-app.get("/blogs/:id", auth, async (req, res) => {
+app.get("/blogs/:id", upload, auth, async (req, res) => {
   try {
     const _id = req.params.id;
+    // console.log(_id);
     const getBlog = await Blog.findById(_id);
+    console.log(getBlog);
     res.send(getBlog);
   } catch (e) {
     res.status(400).send(e);
@@ -71,7 +76,7 @@ app.get("/blogs/:id", auth, async (req, res) => {
 
 app.post("/addBlog", upload, auth, async (req, res) => {
   try {
-    console.log(req.file.filename);
+    // console.log(req.file.filename);
     const addBlog = {
       title: req.body.title,
       url: req.file.filename,
@@ -82,7 +87,7 @@ app.post("/addBlog", upload, auth, async (req, res) => {
     }
     const addingBlogs = new Blog(addBlog);
     const insertBlogs = await addingBlogs.save();
-    console.log(addingBlogs);
+    // console.log(addingBlogs);
     res.status(201).send(insertBlogs);
   } catch (e) {
     res.status(400).send(e);
@@ -130,7 +135,7 @@ app.put("/users/:id", auth, async (req, res) => {
   try {
     const _id = req.params.id;
     const changeRole = await User.findByIdAndUpdate(_id, req.body);
-    console.log(changeRole);
+    // console.log(changeRole);
     res.send(changeRole);
   } catch (e) {
     res.status(500).send(e);
@@ -152,7 +157,7 @@ app.get("/users", auth, async (req, res) => {
 app.post("/register", async (req, res) => {
   try {
     const registerUser = new User(req.body)
-    console.log(registerUser);
+    // console.log(registerUser);
     await registerUser.save();
     res.json(registerUser)
   } catch (error) {
@@ -184,7 +189,7 @@ app.post("/login", async (req, res, next) => {
         userId: loadedUser._id.toString(),
       },
       "somesupersecretsecret",
-      { expiresIn: "1h" }
+      { expiresIn: "10s" }
     );
     res.status(200).json({
       msg: "User Loggedin successfully",
@@ -218,10 +223,10 @@ app.post("/sendpasswordlink", async (req, res) => {
       }
       transporter.sendMail(mailOptions, (error, info) => {
         if (error) {
-          console.log("error", error);
+          // console.log("error", error);
           res.status(401).json({ status: 401, message: "email not send" })
         } else {
-          console.log("Email sent", info.response);
+          // console.log("Email sent", info.response);
           res.status(201).json({ status: 201, message: "Email sent Succsfully" })
         }
       })
@@ -255,7 +260,7 @@ app.post("/changedPassword/:id/:token", async (req, res) => {
   try {
     const validuser = await User.findOne({ _id: id });
     const verifyToken = jwt.verify(token, "keysecret");
-    console.log(verifyToken);
+    // console.log(verifyToken);
     if (validuser && verifyToken._id) {
       const newpassword = await bcrypt.hash(password, 12);
       const setnewuserpass = await User.findByIdAndUpdate({ _id: id }, { password: newpassword });
@@ -268,6 +273,57 @@ app.post("/changedPassword/:id/:token", async (req, res) => {
     res.status(401).json({ status: 401, error })
   }
 })
+
+//refresh token 
+const refresh = (id) => {
+  try {
+    const secret_token = config.secret_jwt;
+    const newSecretJwt = randomString.generate();
+    fs.readFile("Config/config.js", "utf-8", (err, data) => {
+      if (err) throw err;
+      const newValue = data.replace(
+        new RegExp(secret_token, "g"),
+        newSecretJwt
+      );
+      fs.writeFile("Config/config.js", newValue, "utf-8", (err, data) => {
+        if (err) throw err;
+        console.log(" rewrite token done");
+      });
+    });
+    const token = jwt.sign({ _id: id }, newSecretJwt, {
+      expiresIn: "2h",
+    });
+    return token;
+  } catch (error) {
+    console.log(error);
+    res.status(502).send({ msg: error });
+  }
+};
+
+app.post("/refresh-token", async (req, res, next) => {
+  const _id = req.body._id;
+  console.log(req.body);
+  try {
+    const loadedUser = await User.findOne({ _id: _id });
+
+    if (!loadedUser) {
+      return res.status(404).send({ msg: "User Not Found" });
+    }
+
+    // console.log(loadedUser);
+    const tokenData = await refresh(loadedUser._id);
+    // console.log(tokenData);
+
+    res.status(200).json({
+      msg: "Token Refreshed successfully",
+      token: tokenData,
+      user: loadedUser,
+    });
+  } catch (error) {
+    return res.status(501).send({ msg: error });
+  }
+});
+
 
 app.listen(8000, () => {
   console.log(`server is running at `);
