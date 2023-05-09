@@ -1,11 +1,18 @@
 const Blog = require("../src/models/blogs")
 const fs = require("fs")
 
+//file upload
+const uploads =  (req, res) => {
+  res.send("file upload")
+}
+
+
 //for all blogs
 const blogs =  async (req, res) => {
     try {
       const getBlogs = await Blog.find({});
       // console.log(getBlogs);
+      console.log(getBlogs);
       res.json(getBlogs);
     } catch (e) {
       res.status(400).send(e);
@@ -81,5 +88,5 @@ const editBlog = async (req, res) => {
     }
 }
   
-module.exports = { blogs, blogPost, addBlog, deleteBlog, editBlog }
+module.exports = { blogs, blogPost, addBlog, deleteBlog, editBlog , uploads}
   

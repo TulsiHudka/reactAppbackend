@@ -16,7 +16,7 @@ const blogRouter = require("./routers/blogRoutes")
 const userRouter = require("./routers/userRoutes")
 const passwordRouter = require("./routers/passwordRoutes")
 // const fs = require("fs");
-
+// const blogRoutes = require("./routers/blogRoutes")
 require("./src/db/conn");
 // const port = process.env.PORT || 5000;
 
@@ -35,16 +35,16 @@ const cors = require('cors')
 
 //multer
 
-const upload = multer({
-  storage: multer.diskStorage({
-    destination: function (req, file, cb) {
-      cb(null, "uploads")
-    },
-    filename: function (req, file, cb) {
-      cb(null, Date.now() + "_" + file.originalname)
-    }
-  })
-}).single("url");
+// const upload = multer({
+//   storage: multer.diskStorage({
+//     destination: function (req, file, cb) {
+//       cb(null, "uploads")
+//     },
+//     filename: function (req, file, cb) {
+//       cb(null, Date.now() + "_" + file.originalname)
+//     }
+//   })
+// }).single("url");
 
 app.use(cors());
 app.use(express.json());
@@ -55,6 +55,7 @@ app.use("/uploads", express.static("uploads"));
 app.use("/blogs",blogRouter)
 app.use("/users",userRouter)
 app.use("/password",passwordRouter)
+
 
 // app.get("/blogs", async (req, res) => {
 //   try {

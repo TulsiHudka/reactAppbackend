@@ -14,9 +14,4 @@ const upload = multer({
 }).single("url");
   
 
-//file upload
-const uploads =  (req, res) => {
-    res.send("file upload")
-}
-  
 module.exports = {upload}

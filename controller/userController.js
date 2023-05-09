@@ -1,6 +1,11 @@
 const User = require("../src/models/users")
 const bcrypt = require("bcryptjs")
 const jwt = require("jsonwebtoken")
+const config = require("../Config/config");
+const randomString = require("randomstring");
+const fs = require("fs");
+
+
 
 //change role
 const changeRole = async (req, res) => {
@@ -26,7 +31,7 @@ const users =  async (req, res) => {
 }
   
 //register user in database
-const registerUsre =  async (req, res) => {
+const registerUser =  async (req, res) => {
     try {
       const registerUser = new User(req.body)
       // console.log(registerUser);
@@ -104,7 +109,7 @@ const refresh = (id) => {
       }
   
       // console.log(loadedUser);
-      const tokenData = await refresh(loadedUser._id);
+      const tokenData =  refresh(loadedUser._id);
       // console.log(tokenData);
   
       res.status(200).json({
@@ -117,4 +122,4 @@ const refresh = (id) => {
     }
  };
   
- module.exports = {changeRole, users, registerUsre, login, refresh, refreshToken}
+ module.exports = {changeRole, users, registerUser, login, refresh, refreshToken}
