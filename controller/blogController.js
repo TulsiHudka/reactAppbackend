@@ -25,7 +25,7 @@ const blogPost =  async (req, res) => {
       const _id = req.params.id;
       // console.log(_id);
       const getBlog = await Blog.findById(_id);
-      console.log(getBlog);
+      // console.log(getBlog);
       res.send(getBlog);
     } catch (e) {
       res.status(400).send(e);
