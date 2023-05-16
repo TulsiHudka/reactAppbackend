@@ -1,5 +1,5 @@
 const config = {
-    secret_jwt: "MHgnlyIdPUcTWe5cxFE0T6QTBGDz5qRR",
+    secret_jwt: "7H2Sd1im08OseJicVr8egaGoOJOyvlSs",
   };
   
   module.exports = config;
