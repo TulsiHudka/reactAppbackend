@@ -13,6 +13,8 @@ module.exports = (req, res, next) => {
   let decodedToken;
   try {
     decodedToken = jwt.verify(token, config.secret_jwt);
+    // console.log(decodedToken);
+    // console.log(config.secret_jwt);
   } catch (err) {
     err.statusCode = 428;
     throw err;
