@@ -92,7 +92,7 @@ const refresh = (id) => {
       });
     });
     const token = jwt.sign({ _id: id }, newSecretJwt, {
-      expiresIn: "2h",
+      expiresIn: "24h",
     });
     return token;
   } catch (error) {
