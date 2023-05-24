@@ -4,7 +4,6 @@ const bcrypt = require("bcryptjs")
 require('dotenv').config()
 const User = require("../src/models/users")
 
-
 // email config
 const transporter = nodemailer.createTransport({
   service: "Yandex",
@@ -36,10 +35,8 @@ const sendPasswordLink = async (req, res) => {
       }
       transporter.sendMail(mailOptions, (error, info) => {
         if (error) {
-          // console.log("error", error);
           res.status(401).json({ status: 401, message: "email not send" })
         } else {
-          // console.log("Email sent", info.response);
           res.status(201).json({ status: 201, message: "Email sent Succsfully" })
         }
       })
@@ -75,15 +72,12 @@ const changedPassword = async (req, res) => {
     const validuser = await User.findOne({ _id: id });
     console.log(validuser);
     const verifyToken = jwt.verify(token, "keysecret");
-    // console.log(verifyToken);
     if (validuser && verifyToken._id) {
-      // const newpassword = await bcrypt.hash(password, 12);
-      const setnewuserpass = await User.findByIdAndUpdate({ _id: id }, { password: password });
+      const newpassword = await bcrypt.hash(password, 12);
+      const setnewuserpass = await User.findByIdAndUpdate({ _id: id }, { password: newpassword });
       console.log(setnewuserpass);
       const updatedPassword = await setnewuserpass.save();
       res.status(201).send(updatedPassword);
-      // res.status(201).json({ status: 201, updatedPassword })
-
     } else {
       res.status(401).json({ status: 401, message: "user not exist" })
     }

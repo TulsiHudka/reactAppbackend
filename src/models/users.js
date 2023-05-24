@@ -22,7 +22,7 @@ const userSchema = new mongoose.Schema({
     verifytoken: {
         type: String
     }
-    
+
 });
 
 const User = new mongoose.model("User", userSchema);

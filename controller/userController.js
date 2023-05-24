@@ -1,5 +1,4 @@
 const User = require("../src/models/users")
-const bcrypt = require("bcryptjs")
 const jwt = require("jsonwebtoken")
 const config = require("../Config/config");
 const randomString = require("randomstring");
@@ -13,7 +12,6 @@ const changeRole = async (req, res) => {
   try {
     const _id = req.params.id;
     const changeRole = await User.findByIdAndUpdate(_id, req.body);
-    // console.log(changeRole);
     res.send(changeRole);
   } catch (e) {
     res.status(500).send(e);
@@ -24,7 +22,6 @@ const changeRole = async (req, res) => {
 const users = async (req, res) => {
   try {
     const getUsers = await User.find({});
-    // console.log(getUsers);
     res.json(getUsers);
   } catch (e) {
     res.status(400).send(e);
@@ -35,7 +32,6 @@ const users = async (req, res) => {
 const registerUser = async (req, res) => {
   try {
     const registerUser = new User(req.body)
-    // console.log(registerUser);
     await registerUser.save();
     res.json(registerUser)
   } catch (error) {
@@ -110,11 +106,7 @@ const refreshToken = async (req, res, next) => {
     if (!loadedUser) {
       return res.status(404).send({ msg: "User Not Found" });
     }
-
-    // console.log(loadedUser);
     const tokenData = refresh(loadedUser._id);
-    // console.log(tokenData);
-
     res.status(200).json({
       msg: "Token Refreshed successfully",
       token: tokenData,

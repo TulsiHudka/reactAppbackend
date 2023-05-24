@@ -9,12 +9,9 @@ module.exports = (req, res, next) => {
     throw error;
   }
   const token = authHeader.split(" ")[1];
-  // console.log("token", token);
   let decodedToken;
   try {
     decodedToken = jwt.verify(token, config.secret_jwt);
-    // console.log(decodedToken);
-    // console.log(config.secret_jwt);
   } catch (err) {
     err.statusCode = 428;
     throw err;
